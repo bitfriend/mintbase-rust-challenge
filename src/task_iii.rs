@@ -1,10 +1,23 @@
 pub async fn get_stock_prices(tickers: Vec<String>) -> Vec<(String, f64)> {
-    let yahoo = yahoo_finance_api::YahooConnector::new();
+    println!("start");
     let mut result = Vec::with_capacity(500);
+    let (tx, mut rx) = tokio::sync::mpsc::channel(500);
     for ticker in tickers {
-        if let Ok(response) = yahoo.get_latest_quotes(&ticker, "1m").await {
-            result.push((ticker, response.last_quote().unwrap().close));
-        }
+        println!("ticker");
+        let tx_clone = tx.clone();
+        let yahoo = yahoo_finance_api::YahooConnector::new();
+        tokio::spawn(async move {
+            println!("call");
+            if let Ok(response) = yahoo.get_latest_quotes(&ticker, "1m").await {
+                let res = (ticker, response.last_quote().unwrap().close);
+                println!("tx");
+                tx_clone.send(res).await;
+            }
+        });
+    }
+    while let res = rx.recv().await {
+        println!("rx");
+        result.push(res.unwrap());
     }
     result
 }
