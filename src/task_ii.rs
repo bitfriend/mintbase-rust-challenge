@@ -1,5 +1,14 @@
 pub fn parse_ints(ints: Vec<String>) -> Vec<i32> {
-    ints.into_iter().map(|i| i.parse().unwrap()).collect()
+    let mut res: Vec<i32> = vec![];
+    for item in ints.iter() {
+        match item.parse::<i32>() {
+            Ok(v) => {
+                res.push(v);
+            },
+            Err(e) => {},
+        }
+    }
+    return res;
 }
 
 #[cfg(test)]
